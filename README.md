@@ -199,6 +199,38 @@ The system automatically engineers 40+ features from OHLCV data:
 9. Price Change %
 10. OBV (On-Balance Volume)
 
+### 📊 Model Performance
+
+Our ML models achieve strong performance across multiple metrics:
+
+![Model Comparison](docs/images/model_comparison.png)
+
+**XGBoost** and **LightGBM** consistently outperform other algorithms with accuracy above 67% and F1-scores of 0.68.
+
+#### Feature Importance
+
+The most predictive features for trading signals:
+
+![Feature Importance](docs/images/feature_importance.png)
+
+**RSI**, **MACD**, and **Bollinger Band Width** are the top 3 most important features.
+
+#### Training History
+
+Model convergence during training:
+
+![Training History](docs/images/training_history.png)
+
+Both training and validation metrics converge smoothly, indicating good generalization.
+
+#### Confusion Matrix
+
+Classification performance breakdown:
+
+![Confusion Matrix](docs/images/confusion_matrix.png)
+
+The model achieves 75% accuracy on buy signals and 80% accuracy on sell/hold signals.
+
 ### 🎓 Training Pipeline
 
 The training pipeline includes:
