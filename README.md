@@ -80,6 +80,21 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+#### Quick Start Example
+
+Check out the `examples/` directory for practical usage:
+
+```bash
+# Run prediction example
+python examples/predict_signals.py
+```
+
+This demonstrates:
+- Calculating 40+ technical indicators
+- Preparing features for ML models
+- Generating trading signals
+- Confidence scoring
+
 #### Train a Model
 
 ```bash
