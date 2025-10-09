@@ -89,8 +89,7 @@ class DataPreparation:
         self.feature_columns = feature_columns
         
         # Handle missing values
-        data[feature_columns] = data[feature_columns].fillna(method='ffill').fillna(method='bfill')
-        
+        data[feature_columns] = data[feature_columns].ffill().bfill()     
         # Handle infinite values
         data[feature_columns] = data[feature_columns].replace([np.inf, -np.inf], np.nan)
         data[feature_columns] = data[feature_columns].fillna(0)
