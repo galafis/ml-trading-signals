@@ -213,4 +213,14 @@ class TradingClassifier:
         """
         classifier = cls(model_type=model_type)
         classifier.model = joblib.load(filepath)
+        
+        # Try to extract feature importance if model supports it
+        if hasattr(classifier.model, 'feature_importances_'):
+            # We don't have feature names, so create generic names
+            n_features = len(classifier.model.feature_importances_)
+            classifier.feature_importance = pd.DataFrame({
+                'feature': [f'feature_{i}' for i in range(n_features)],
+                'importance': classifier.model.feature_importances_
+            }).sort_values('importance', ascending=False)
+        
         return classifier

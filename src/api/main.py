@@ -58,7 +58,7 @@ def health_check():
     """Health check endpoint."""
     return {
         "status": "healthy",
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now().isoformat()
     }
 
 
@@ -104,7 +104,7 @@ async def predict_signal(request: PredictionRequest):
         
         return PredictionResponse(
             symbol=request.symbol,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(),
             signal=signal,
             probability=probability,
             confidence=confidence,
