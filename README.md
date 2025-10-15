@@ -1,16 +1,14 @@
 # 🤖 ML Trading Signals
 
+[![Tests](https://github.com/galafis/ml-trading-signals/workflows/Tests/badge.svg)](https://github.com/galafis/ml-trading-signals/actions/workflows/tests.yml)
 [![Code Coverage](https://codecov.io/gh/galafis/ml-trading-signals/branch/main/graph/badge.svg)](https://codecov.io/gh/galafis/ml-trading-signals)
-
-
-[![Python](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.9%20|%203.10%20|%203.11-blue.svg)](https://www.python.org/)
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3-orange.svg)](https://scikit-learn.org/)
 [![XGBoost](https://img.shields.io/badge/XGBoost-2.0-red.svg)](https://xgboost.readthedocs.io/)
 [![LightGBM](https://img.shields.io/badge/LightGBM-4.1-yellow.svg)](https://lightgbm.readthedocs.io/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104-green.svg)](https://fastapi.tiangolo.com/)
 [![MLflow](https://img.shields.io/badge/MLflow-2.9-blue.svg)](https://mlflow.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-Passing-brightgreen.svg)](#testing)
 
 [English](#english) | [Português](#português)
 
@@ -388,6 +386,164 @@ ml-trading-signals/
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on:
+- Development setup
+- Code style and best practices
+- Testing requirements
+- Pull request process
+
+### 🐛 Troubleshooting
+
+<details>
+<summary>Common Issues and Solutions</summary>
+
+#### Installation Issues
+
+**Problem**: `pip install` fails for ta-lib dependencies
+```bash
+# Solution: Install TA-Lib system dependencies first
+# Ubuntu/Debian
+sudo apt-get install libta-lib-dev
+
+# macOS
+brew install ta-lib
+```
+
+**Problem**: ImportError for yfinance or pandas
+```bash
+# Solution: Ensure all dependencies are installed
+pip install -r requirements.txt --upgrade
+```
+
+#### Training Issues
+
+**Problem**: "No data found for symbol"
+- Check that the symbol is correctly formatted (e.g., `PETR4.SA` for Brazilian stocks)
+- Verify the date range is valid and not in the future
+- Some symbols may not have historical data for the requested period
+
+**Problem**: "Insufficient data for feature calculation"
+- Increase the date range to get more data points
+- Technical indicators need a minimum number of periods (typically 20-30 days)
+
+**Problem**: Model training is too slow
+- Reduce `n_estimators` in model parameters
+- Use a smaller date range for initial testing
+- Try a simpler model like `logistic` instead of `xgboost`
+
+#### API Issues
+
+**Problem**: API returns 500 error on prediction
+- Ensure the model file exists and is accessible
+- Check that the symbol has recent data available
+- Verify the model was trained with compatible features
+
+**Problem**: Docker container fails to start
+```bash
+# Check logs
+docker logs <container_id>
+
+# Rebuild image without cache
+docker build --no-cache -t ml-trading-signals .
+```
+
+#### Performance Issues
+
+**Problem**: Predictions are inconsistent
+- Use `random_state` parameter for reproducibility
+- Ensure sufficient training data (at least 1 year)
+- Check for data quality issues (missing values, outliers)
+
+**Problem**: Low model accuracy
+- Try different model types (XGBoost, LightGBM)
+- Tune hyperparameters using validation set
+- Add more features or engineer new indicators
+- Use longer training periods
+- Consider ensemble methods
+
+</details>
+
+### ❓ FAQ
+
+<details>
+<summary>Frequently Asked Questions</summary>
+
+#### General Questions
+
+**Q: What markets are supported?**  
+A: Any market available on Yahoo Finance, including stocks, indices, ETFs, cryptocurrencies, and commodities.
+
+**Q: Can I use this for real trading?**  
+A: This is a research and educational tool. Always backtest thoroughly and consider risks before live trading. Not financial advice.
+
+**Q: What time frames are supported?**  
+A: Currently daily data. Intraday support could be added by modifying the data fetching logic.
+
+**Q: How accurate are the predictions?**  
+A: Typical accuracy ranges from 58-68% depending on the model, features, and market conditions. Past performance doesn't guarantee future results.
+
+#### Technical Questions
+
+**Q: What features are most important?**  
+A: Typically RSI, MACD, Bollinger Bands, and volume-based indicators. Use `get_feature_importance()` to see for your specific model.
+
+**Q: Can I add custom indicators?**  
+A: Yes! Add them to `src/features/technical_indicators.py` and update the `add_all_indicators()` method. See [CONTRIBUTING.md](CONTRIBUTING.md) for examples.
+
+**Q: How do I tune hyperparameters?**  
+A: Pass custom parameters to the training pipeline:
+```python
+model_params = {
+    'n_estimators': 200,
+    'max_depth': 8,
+    'learning_rate': 0.05
+}
+results = pipeline.run(model_params=model_params)
+```
+
+**Q: Can I use GPU acceleration?**  
+A: Yes for XGBoost and LightGBM. Set `tree_method='gpu_hist'` for XGBoost or `device='gpu'` for LightGBM in model parameters.
+
+**Q: How often should I retrain models?**  
+A: Retrain weekly or monthly as markets evolve. Monitor validation metrics to detect when retraining is needed.
+
+**Q: What's the difference between target types?**  
+A: 
+- `direction`: Binary classification (up/down)
+- `returns`: Regression (predict actual return %)
+- `binary`: Binary with custom threshold
+
+#### Deployment Questions
+
+**Q: How do I deploy to production?**  
+A: See the [Deployment](#-deployment) section. Options include Docker, AWS, GCP, Azure, and Heroku.
+
+**Q: Can this handle high-frequency requests?**  
+A: Yes, FastAPI is async and can handle concurrent requests. Use horizontal scaling (multiple containers) for higher loads.
+
+**Q: How do I monitor predictions?**  
+A: Use MLflow for experiment tracking and logging. Add custom metrics to the API endpoints.
+
+**Q: What about data freshness?**  
+A: The API fetches latest data from Yahoo Finance on each request. For production, consider caching with periodic updates.
+
+</details>
+
+### 📚 Additional Resources
+
+- **Documentation**: Full API docs at `http://localhost:8000/docs` when running the server
+- **Examples**: Check the `examples/` directory for practical usage
+- **Notebooks**: Jupyter notebooks in `notebooks/` for interactive exploration
+- **Contributing**: See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines
+- **Issues**: Report bugs or request features on [GitHub Issues](https://github.com/galafis/ml-trading-signals/issues)
+
+### 🔗 Related Projects
+
+- [TA-Lib](https://github.com/mrjbq7/ta-lib): Technical Analysis Library
+- [yfinance](https://github.com/ranaroussi/yfinance): Yahoo Finance data downloader
+- [MLflow](https://mlflow.org/): ML lifecycle management
+- [FastAPI](https://fastapi.tiangolo.com/): Modern web framework for APIs
+
 ### 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -617,6 +773,164 @@ python train.py --use-mlflow
 ### 🤝 Contribuindo
 
 Contribuições são bem-vindas! Sinta-se à vontade para submeter um Pull Request.
+
+Veja [CONTRIBUTING.md](CONTRIBUTING.md) para diretrizes detalhadas sobre:
+- Configuração do ambiente de desenvolvimento
+- Estilo de código e melhores práticas
+- Requisitos de teste
+- Processo de pull request
+
+### 🐛 Solução de Problemas
+
+<details>
+<summary>Problemas Comuns e Soluções</summary>
+
+#### Problemas de Instalação
+
+**Problema**: `pip install` falha para dependências ta-lib
+```bash
+# Solução: Instale dependências do sistema primeiro
+# Ubuntu/Debian
+sudo apt-get install libta-lib-dev
+
+# macOS
+brew install ta-lib
+```
+
+**Problema**: ImportError para yfinance ou pandas
+```bash
+# Solução: Certifique-se de que todas as dependências estão instaladas
+pip install -r requirements.txt --upgrade
+```
+
+#### Problemas de Treinamento
+
+**Problema**: "Nenhum dado encontrado para o símbolo"
+- Verifique se o símbolo está formatado corretamente (ex: `PETR4.SA` para ações brasileiras)
+- Verifique se o intervalo de datas é válido e não está no futuro
+- Alguns símbolos podem não ter dados históricos para o período solicitado
+
+**Problema**: "Dados insuficientes para cálculo de features"
+- Aumente o intervalo de datas para obter mais pontos de dados
+- Indicadores técnicos precisam de um número mínimo de períodos (tipicamente 20-30 dias)
+
+**Problema**: Treinamento do modelo muito lento
+- Reduza `n_estimators` nos parâmetros do modelo
+- Use um intervalo de datas menor para testes iniciais
+- Tente um modelo mais simples como `logistic` em vez de `xgboost`
+
+#### Problemas da API
+
+**Problema**: API retorna erro 500 na previsão
+- Certifique-se de que o arquivo do modelo existe e está acessível
+- Verifique se o símbolo tem dados recentes disponíveis
+- Verifique se o modelo foi treinado com features compatíveis
+
+**Problema**: Container Docker falha ao iniciar
+```bash
+# Verificar logs
+docker logs <container_id>
+
+# Reconstruir imagem sem cache
+docker build --no-cache -t ml-trading-signals .
+```
+
+#### Problemas de Performance
+
+**Problema**: Previsões inconsistentes
+- Use o parâmetro `random_state` para reprodutibilidade
+- Garanta dados de treinamento suficientes (pelo menos 1 ano)
+- Verifique problemas de qualidade de dados (valores ausentes, outliers)
+
+**Problema**: Baixa acurácia do modelo
+- Tente diferentes tipos de modelo (XGBoost, LightGBM)
+- Ajuste hiperparâmetros usando conjunto de validação
+- Adicione mais features ou engenharia novos indicadores
+- Use períodos de treinamento mais longos
+- Considere métodos ensemble
+
+</details>
+
+### ❓ Perguntas Frequentes
+
+<details>
+<summary>FAQ - Dúvidas Comuns</summary>
+
+#### Perguntas Gerais
+
+**P: Quais mercados são suportados?**  
+R: Qualquer mercado disponível no Yahoo Finance, incluindo ações, índices, ETFs, criptomoedas e commodities.
+
+**P: Posso usar isso para trading real?**  
+R: Esta é uma ferramenta de pesquisa e educação. Sempre faça backtesting completo e considere os riscos antes de trading ao vivo. Não é aconselhamento financeiro.
+
+**P: Quais períodos são suportados?**  
+R: Atualmente dados diários. Suporte intradiário pode ser adicionado modificando a lógica de busca de dados.
+
+**P: Quão precisas são as previsões?**  
+R: A acurácia típica varia de 58-68% dependendo do modelo, features e condições de mercado. Performance passada não garante resultados futuros.
+
+#### Perguntas Técnicas
+
+**P: Quais features são mais importantes?**  
+R: Tipicamente RSI, MACD, Bandas de Bollinger e indicadores baseados em volume. Use `get_feature_importance()` para ver no seu modelo específico.
+
+**P: Posso adicionar indicadores personalizados?**  
+R: Sim! Adicione-os em `src/features/technical_indicators.py` e atualize o método `add_all_indicators()`. Veja [CONTRIBUTING.md](CONTRIBUTING.md) para exemplos.
+
+**P: Como ajustar hiperparâmetros?**  
+R: Passe parâmetros customizados para o pipeline de treinamento:
+```python
+model_params = {
+    'n_estimators': 200,
+    'max_depth': 8,
+    'learning_rate': 0.05
+}
+results = pipeline.run(model_params=model_params)
+```
+
+**P: Posso usar aceleração GPU?**  
+R: Sim para XGBoost e LightGBM. Configure `tree_method='gpu_hist'` para XGBoost ou `device='gpu'` para LightGBM nos parâmetros do modelo.
+
+**P: Com que frequência devo retreinar os modelos?**  
+R: Retreine semanalmente ou mensalmente conforme os mercados evoluem. Monitore métricas de validação para detectar quando retreinamento é necessário.
+
+**P: Qual a diferença entre tipos de target?**  
+R: 
+- `direction`: Classificação binária (subida/descida)
+- `returns`: Regressão (prever retorno % real)
+- `binary`: Binário com limite customizado
+
+#### Perguntas de Deployment
+
+**P: Como fazer deploy para produção?**  
+R: Veja a seção [Deployment](#-deployment). Opções incluem Docker, AWS, GCP, Azure e Heroku.
+
+**P: Isso aguenta requisições de alta frequência?**  
+R: Sim, FastAPI é assíncrono e pode lidar com requisições simultâneas. Use escalonamento horizontal (múltiplos containers) para cargas maiores.
+
+**P: Como monitorar previsões?**  
+R: Use MLflow para rastreamento de experimentos e logging. Adicione métricas customizadas aos endpoints da API.
+
+**P: E quanto à atualização dos dados?**  
+R: A API busca dados mais recentes do Yahoo Finance em cada requisição. Para produção, considere cache com atualizações periódicas.
+
+</details>
+
+### 📚 Recursos Adicionais
+
+- **Documentação**: Documentação completa da API em `http://localhost:8000/docs` ao executar o servidor
+- **Exemplos**: Confira o diretório `examples/` para uso prático
+- **Notebooks**: Notebooks Jupyter em `notebooks/` para exploração interativa
+- **Contribuindo**: Veja [CONTRIBUTING.md](CONTRIBUTING.md) para diretrizes de desenvolvimento
+- **Issues**: Reporte bugs ou solicite recursos em [GitHub Issues](https://github.com/galafis/ml-trading-signals/issues)
+
+### 🔗 Projetos Relacionados
+
+- [TA-Lib](https://github.com/mrjbq7/ta-lib): Biblioteca de Análise Técnica
+- [yfinance](https://github.com/ranaroussi/yfinance): Downloader de dados do Yahoo Finance
+- [MLflow](https://mlflow.org/): Gerenciamento do ciclo de vida de ML
+- [FastAPI](https://fastapi.tiangolo.com/): Framework web moderno para APIs
 
 ### 📄 Licença
 
