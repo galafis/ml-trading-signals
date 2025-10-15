@@ -37,6 +37,7 @@ ENV/
 .coverage
 htmlcov/
 .tox/
+coverage.xml
 
 # Environment variables
 .env
