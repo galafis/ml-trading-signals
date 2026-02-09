@@ -70,7 +70,7 @@ ml-trading-signals/
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/ml-trading-signals.git
+git clone https://github.com/galafis/ml-trading-signals.git
 cd ml-trading-signals
 
 # Create virtual environment
@@ -592,7 +592,7 @@ Construído para traders quantitativos e engenheiros financeiros, este sistema f
 
 ```bash
 # Clonar repositório
-git clone https://github.com/yourusername/ml-trading-signals.git
+git clone https://github.com/galafis/ml-trading-signals.git
 cd ml-trading-signals
 
 # Criar ambiente virtual
