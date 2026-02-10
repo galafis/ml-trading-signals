@@ -1,7 +1,5 @@
 # 🤖 ML Trading Signals
 
-[![Tests](https://github.com/galafis/ml-trading-signals/workflows/Tests/badge.svg)](https://github.com/galafis/ml-trading-signals/actions/workflows/tests.yml)
-[![Code Coverage](https://codecov.io/gh/galafis/ml-trading-signals/branch/main/graph/badge.svg)](https://codecov.io/gh/galafis/ml-trading-signals)
 [![Python](https://img.shields.io/badge/Python-3.9%20|%203.10%20|%203.11-blue.svg)](https://www.python.org/)
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3-orange.svg)](https://scikit-learn.org/)
 [![XGBoost](https://img.shields.io/badge/XGBoost-2.0-red.svg)](https://xgboost.readthedocs.io/)
