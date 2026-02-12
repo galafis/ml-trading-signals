@@ -1,555 +1,321 @@
-# 📈 Ml Trading Signals
+# ML Trading Signals
 
-> Machine learning system for generating trading signals using XGBoost, LightGBM, and ensemble methods. Features 40+ technical indicators, MLflow tracking, and FastAPI inference API.
+Sistema de machine learning para gerar sinais de trading (compra/venda) a partir de indicadores tecnicos. Utiliza classificadores como XGBoost e LightGBM treinados sobre dados historicos do Yahoo Finance.
 
-[![Python](https://img.shields.io/badge/Python-3.12-3776AB.svg)](https://img.shields.io/badge/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg)](https://img.shields.io/badge/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688.svg)](https://img.shields.io/badge/)
-[![MLflow](https://img.shields.io/badge/MLflow-2.10-0194E2.svg)](https://img.shields.io/badge/)
-[![NumPy](https://img.shields.io/badge/NumPy-1.26-013243.svg)](https://img.shields.io/badge/)
-[![Pandas](https://img.shields.io/badge/Pandas-2.2-150458.svg)](https://img.shields.io/badge/)
-[![Plotly](https://img.shields.io/badge/Plotly-5.18-3F4F75.svg)](https://img.shields.io/badge/)
-[![scikit--learn](https://img.shields.io/badge/scikit--learn-1.4-F7931E.svg)](https://img.shields.io/badge/)
-[![XGBoost](https://img.shields.io/badge/XGBoost-2.0-FF6600.svg)](https://img.shields.io/badge/)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB.svg)](https://python.org)
+[![XGBoost](https://img.shields.io/badge/XGBoost-2.0-FF6600.svg)](https://xgboost.readthedocs.io)
+[![LightGBM](https://img.shields.io/badge/LightGBM-4.1-9ACD32.svg)](https://lightgbm.readthedocs.io)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.104-009688.svg)](https://fastapi.tiangolo.com)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-[English](#english) | [Português](#português)
+[Portugues](#portugues) | [English](#english)
+
+---
+
+## Portugues
+
+### Visao Geral
+
+Este projeto implementa um pipeline completo de machine learning para classificacao de sinais de trading:
+
+1. **Coleta de dados** -- baixa OHLCV historico via `yfinance`
+2. **Feature engineering** -- calcula ~35 indicadores tecnicos (SMA, EMA, MACD, RSI, Bollinger Bands, ATR, OBV, etc.) usando a biblioteca `ta`
+3. **Preparacao** -- cria variavel-alvo (direcao do preco), trata valores ausentes/infinitos, escala features com `StandardScaler`, divide em train/val/test respeitando ordem temporal
+4. **Treinamento** -- treina classificador binario (XGBoost, LightGBM, Random Forest, Gradient Boosting ou Logistic Regression)
+5. **Avaliacao** -- calcula accuracy, precision, recall, F1 e AUC no conjunto de teste
+6. **Inferencia** -- API FastAPI que carrega modelo salvo e retorna sinais para um simbolo
+
+### Como Funciona
+
+O pipeline treina um classificador para prever se o preco de fechamento subira ou cairá no proximo periodo. A variavel-alvo e binaria: `1` (subiu) ou `0` (caiu). Todas as features sao indicadores tecnicos calculados a partir de dados OHLCV.
+
+> **Nota:** Este e um projeto educacional/demonstrativo. Os modelos treinados sobre dados historicos nao garantem performance futura. Nao utilize para decisoes financeiras reais sem validacao adequada.
+
+### Inicio Rapido
+
+```bash
+# Clonar o repositorio
+git clone https://github.com/galafis/ml-trading-signals.git
+cd ml-trading-signals
+
+# Criar ambiente virtual e instalar dependencias
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+
+# Treinar modelo (Bovespa, ultimos 2 anos, XGBoost)
+python train.py --symbol ^BVSP --model-type xgboost
+
+# Treinar e salvar modelo
+python train.py --symbol PETR4.SA --save-model models/petr4_xgboost.pkl
+
+# Iniciar API de inferencia
+uvicorn src.api.main:app --reload
+```
+
+### Uso da API
+
+```bash
+# Health check
+curl http://localhost:8000/health
+
+# Gerar sinal de trading
+curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{"symbol": "PETR4.SA", "model_name": "petr4_xgboost.pkl", "model_type": "xgboost"}'
+
+# Ver feature importance do modelo
+curl "http://localhost:8000/feature-importance?model_name=petr4_xgboost.pkl&top_n=10"
+
+# Listar simbolos sugeridos
+curl http://localhost:8000/symbols
+```
+
+### Estrutura do Projeto
+
+```
+ml-trading-signals/
+├── src/
+│   ├── api/
+│   │   └── main.py                 # API FastAPI (predict, feature-importance, symbols)
+│   ├── features/
+│   │   ├── technical_indicators.py # ~35 indicadores tecnicos via lib ta
+│   │   └── data_preparation.py     # Criacao de target, scaling, split temporal
+│   ├── models/
+│   │   └── classifier.py           # Wrapper unificado para 5 classificadores
+│   └── training/
+│       └── train_pipeline.py       # Pipeline: fetch -> features -> prep -> train -> eval
+├── tests/
+│   ├── unit/
+│   │   ├── test_features.py        # Testes de indicadores e preparacao de dados
+│   │   └── test_models.py          # Testes de treinamento, predicao, save/load
+│   └── integration/
+│       ├── test_api.py             # Testes de endpoints FastAPI
+│       └── test_training.py        # Testes end-to-end do pipeline
+├── examples/
+│   └── predict_signals.py          # Exemplo: gerar sinais com dados simulados
+├── notebooks/
+│   └── 01_quick_start.md           # Tutorial passo a passo (convertivel para .ipynb)
+├── models/                         # Diretorio para modelos salvos (.pkl)
+├── data/                           # Diretorios para dados (raw, processed, external)
+├── train.py                        # Entry point CLI para treinamento
+├── requirements.txt                # Dependencias de producao
+├── requirements-dev.txt            # Dependencias de desenvolvimento/teste
+├── Dockerfile                      # Container para API
+└── pytest.ini                      # Configuracao de testes
+```
+
+### Indicadores Tecnicos Implementados
+
+| Categoria | Indicadores |
+|-----------|------------|
+| Tendencia | SMA (5, 10, 20, 50), EMA (5, 10, 20), MACD, ADX |
+| Momentum | RSI, Stochastic Oscillator, Williams %R, ROC |
+| Volatilidade | Bollinger Bands, ATR, Keltner Channel |
+| Volume | OBV, Volume SMA 20, MFI, VPT |
+| Preco | Returns, Log Returns, Price Change, High-Low Range, Gap |
+
+### Modelos Disponiveis
+
+| Modelo | Biblioteca |
+|--------|-----------|
+| XGBoost | `xgboost` |
+| LightGBM | `lightgbm` |
+| Random Forest | `scikit-learn` |
+| Gradient Boosting | `scikit-learn` |
+| Logistic Regression | `scikit-learn` |
+
+### Testes
+
+```bash
+# Instalar dependencias de dev
+pip install -r requirements-dev.txt
+
+# Rodar testes unitarios
+pytest tests/unit/ -v
+
+# Rodar todos os testes (inclui integracao com yfinance)
+pytest -v
+
+# Com cobertura
+pytest --cov=src --cov-report=term-missing
+```
+
+### Docker
+
+```bash
+docker build -t ml-trading-signals .
+docker run -p 8000:8000 ml-trading-signals
+```
+
+### Stack
+
+| Tecnologia | Uso |
+|------------|-----|
+| Python 3.11+ | Linguagem principal |
+| XGBoost / LightGBM | Classificadores gradient boosting |
+| scikit-learn | Random Forest, Logistic Regression, scaling, metricas |
+| ta | Calculo de indicadores tecnicos |
+| yfinance | Download de dados de mercado |
+| FastAPI | API de inferencia |
+| pandas / numpy | Manipulacao de dados |
+| joblib | Serializacao de modelos |
+| MLflow (opcional) | Tracking de experimentos |
 
 ---
 
 ## English
 
-### 🎯 Overview
+### Overview
 
-**Ml Trading Signals** is a production-grade Python application that showcases modern software engineering practices including clean architecture, comprehensive testing, containerized deployment, and CI/CD readiness.
+This project implements a complete machine learning pipeline for trading signal classification:
 
-The codebase comprises **2,204 lines** of source code organized across **22 modules**, following industry best practices for maintainability, scalability, and code quality.
+1. **Data collection** -- downloads historical OHLCV data via `yfinance`
+2. **Feature engineering** -- computes ~35 technical indicators (SMA, EMA, MACD, RSI, Bollinger Bands, ATR, OBV, etc.) using the `ta` library
+3. **Preparation** -- creates target variable (price direction), handles missing/infinite values, scales features with `StandardScaler`, splits into train/val/test respecting time order
+4. **Training** -- trains a binary classifier (XGBoost, LightGBM, Random Forest, Gradient Boosting, or Logistic Regression)
+5. **Evaluation** -- computes accuracy, precision, recall, F1, and AUC on the test set
+6. **Inference** -- FastAPI endpoint that loads a saved model and returns signals for a given symbol
 
-### ✨ Key Features
+### How It Works
 
-- **📈 Strategy Engine**: Multiple trading strategy implementations with configurable parameters
-- **🔄 Backtesting Framework**: Historical data simulation with realistic market conditions
-- **📊 Performance Analytics**: Sharpe ratio, Sortino ratio, maximum drawdown, and more
-- **⚡ Real-time Processing**: Low-latency data processing optimized for market speed
-- **🤖 ML Pipeline**: End-to-end machine learning workflow from data to deployment
-- **🔬 Feature Engineering**: Automated feature extraction and transformation
-- **📊 Model Evaluation**: Comprehensive metrics and cross-validation
-- **🚀 Model Serving**: Production-ready prediction API
+The pipeline trains a classifier to predict whether the closing price will rise or fall in the next period. The target variable is binary: `1` (up) or `0` (down). All features are technical indicators computed from OHLCV data.
 
-### 🏗️ Architecture
+> **Note:** This is an educational/demonstration project. Models trained on historical data do not guarantee future performance. Do not use for real financial decisions without proper validation.
 
-```mermaid
-graph TB
-    subgraph Client["🖥️ Client Layer"]
-        A[REST API Client]
-        B[Swagger UI]
-    end
-    
-    subgraph API["⚡ API Layer"]
-        C[Authentication & Rate Limiting]
-        D[Request Validation]
-        E[API Endpoints]
-    end
-    
-    subgraph ML["🤖 ML Engine"]
-        F[Feature Engineering]
-        G[Model Training]
-        H[Prediction Service]
-        I[Model Registry]
-    end
-    
-    subgraph Data["💾 Data Layer"]
-        J[(Database)]
-        K[Cache Layer]
-        L[Data Pipeline]
-    end
-    
-    A --> C
-    B --> C
-    C --> D --> E
-    E --> H
-    E --> J
-    H --> F --> G
-    G --> I
-    I --> H
-    E --> K
-    L --> J
-    
-    style Client fill:#e1f5fe
-    style API fill:#f3e5f5
-    style ML fill:#e8f5e9
-    style Data fill:#fff3e0
-```
-
-```mermaid
-classDiagram
-    class FeatureImportanceResponse
-    class TechnicalIndicators
-    class DataPreparation
-    class TrainingPipeline
-    class PredictionRequest
-    class PredictionResponse
-    class TradingClassifier
-```
-
-### 📡 API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/` | Retrieve resource (list/create) |
-| `GET` | `/health` | Retrieve Health |
-| `POST` | `/predict` | Create Predict |
-| `GET` | `/feature-importance` | Retrieve Feature-Importance |
-| `GET` | `/symbols` | Retrieve Symbols |
-
-### 🚀 Quick Start
-
-#### Prerequisites
-
-- Python 3.12+
-- pip (Python package manager)
-- Docker and Docker Compose (optional)
-
-#### Installation
+### Quick Start
 
 ```bash
 # Clone the repository
 git clone https://github.com/galafis/ml-trading-signals.git
 cd ml-trading-signals
 
-# Create and activate virtual environment
+# Create virtual environment and install dependencies
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
+
+# Train a model (Bovespa index, last 2 years, XGBoost)
+python train.py --symbol ^BVSP --model-type xgboost
+
+# Train and save model
+python train.py --symbol PETR4.SA --save-model models/petr4_xgboost.pkl
+
+# Start inference API
+uvicorn src.api.main:app --reload
 ```
 
-#### Running
+### API Usage
 
 ```bash
-# Run the application
-python src/api/main.py
+# Health check
+curl http://localhost:8000/health
+
+# Generate trading signal
+curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{"symbol": "PETR4.SA", "model_name": "petr4_xgboost.pkl", "model_type": "xgboost"}'
+
+# View model feature importance
+curl "http://localhost:8000/feature-importance?model_name=petr4_xgboost.pkl&top_n=10"
+
+# List suggested symbols
+curl http://localhost:8000/symbols
 ```
 
-### 🐳 Docker
+### API Endpoints
 
-```bash
-# Build the Docker image
-docker build -t ml-trading-signals .
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/` | API info |
+| `GET` | `/health` | Health check |
+| `POST` | `/predict` | Generate trading signal for a symbol |
+| `GET` | `/feature-importance` | Get feature importance from a saved model |
+| `GET` | `/symbols` | List suggested Brazilian stock symbols |
 
-# Run the container
-docker run -d -p 8000:8000 --name ml-trading-signals ml-trading-signals
-
-# View logs
-docker logs -f ml-trading-signals
-
-# Stop and remove
-docker stop ml-trading-signals && docker rm ml-trading-signals
-```
-
-### 🧪 Testing
-
-```bash
-# Run all tests
-pytest
-
-# Run with coverage report
-pytest --cov --cov-report=html
-
-# Run specific test module
-pytest tests/test_main.py -v
-
-# Run with detailed output
-pytest -v --tb=short
-```
-
-### 📁 Project Structure
+### Project Structure
 
 ```
 ml-trading-signals/
-├── data/
-│   ├── external/
-│   ├── processed/
-│   └── raw/
-├── docs/          # Documentation
-│   └── images/
-├── examples/
-│   └── predict_signals.py
-├── models/        # Data models
-│   └── README.md
-├── notebooks/
-│   ├── 01_quick_start.md
-│   └── README.md
-├── scripts/
-│   └── generate_charts.py
-├── src/          # Source code
-│   ├── api/           # API endpoints
-│   │   ├── __init__.py
-│   │   └── main.py
+├── src/
+│   ├── api/
+│   │   └── main.py                 # FastAPI app (predict, feature-importance, symbols)
 │   ├── features/
-│   │   ├── __init__.py
-│   │   ├── data_preparation.py
-│   │   └── technical_indicators.py
-│   ├── inference/
-│   │   └── __init__.py
-│   ├── models/        # Data models
-│   │   ├── __init__.py
-│   │   └── classifier.py
-│   ├── training/
-│   │   ├── __init__.py
-│   │   └── train_pipeline.py
-│   ├── utils/         # Utilities
-│   │   └── __init__.py
-│   └── __init__.py
-├── tests/         # Test suite
-│   ├── integration/
-│   │   ├── __init__.py
-│   │   ├── test_api.py
-│   │   └── test_training.py
-│   ├── unit/
-│   │   ├── __init__.py
-│   │   ├── test_features.py
-│   │   └── test_models.py
-│   └── __init__.py
-├── CONTRIBUTING.md
-├── Dockerfile
-├── LICENSE
-├── README.md
-├── requirements.txt
-└── train.py
+│   │   ├── technical_indicators.py # ~35 technical indicators via ta lib
+│   │   └── data_preparation.py     # Target creation, scaling, time-aware split
+│   ├── models/
+│   │   └── classifier.py           # Unified wrapper for 5 classifiers
+│   └── training/
+│       └── train_pipeline.py       # Pipeline: fetch -> features -> prep -> train -> eval
+├── tests/
+│   ├── unit/                       # Feature and model unit tests
+│   └── integration/                # API and pipeline integration tests
+├── examples/
+│   └── predict_signals.py          # Example: generate signals with simulated data
+├── notebooks/
+│   └── 01_quick_start.md           # Step-by-step tutorial (convertible to .ipynb)
+├── train.py                        # CLI entry point for training
+├── requirements.txt                # Production dependencies
+├── requirements-dev.txt            # Dev/test dependencies
+├── Dockerfile                      # Container for API
+└── pytest.ini                      # Test configuration
 ```
 
-### 📊 Performance Metrics
+### Available Models
 
-The engine calculates comprehensive performance metrics:
+| Model | Library |
+|-------|---------|
+| XGBoost | `xgboost` |
+| LightGBM | `lightgbm` |
+| Random Forest | `scikit-learn` |
+| Gradient Boosting | `scikit-learn` |
+| Logistic Regression | `scikit-learn` |
 
-| Metric | Description | Formula |
-|--------|-------------|---------|
-| **Sharpe Ratio** | Risk-adjusted return | (Rp - Rf) / σp |
-| **Sortino Ratio** | Downside risk-adjusted return | (Rp - Rf) / σd |
-| **Max Drawdown** | Maximum peak-to-trough decline | max(1 - Pt/Pmax) |
-| **Win Rate** | Percentage of profitable trades | Wins / Total |
-| **Profit Factor** | Gross profit / Gross loss | ΣProfit / ΣLoss |
-| **Calmar Ratio** | Return / Max Drawdown | CAGR / MDD |
-| **VaR (95%)** | Value at Risk | 5th percentile of returns |
-| **Expected Shortfall** | Conditional VaR | E[R | R < VaR] |
-
-### 🛠️ Tech Stack
-
-| Technology | Description | Role |
-|------------|-------------|------|
-| **Python** | Core Language | Primary |
-| **Docker** | Containerization platform | Framework |
-| **FastAPI** | High-performance async web framework | Framework |
-| **MLflow** | ML lifecycle management | Framework |
-| **NumPy** | Numerical computing | Framework |
-| **Pandas** | Data manipulation library | Framework |
-| **Plotly** | Interactive visualization | Framework |
-| **scikit-learn** | Machine learning library | Framework |
-| **XGBoost** | Gradient boosting framework | Framework |
-
-### 🚀 Deployment
-
-#### Cloud Deployment Options
-
-The application is containerized and ready for deployment on:
-
-| Platform | Service | Notes |
-|----------|---------|-------|
-| **AWS** | ECS, EKS, EC2 | Full container support |
-| **Google Cloud** | Cloud Run, GKE | Serverless option available |
-| **Azure** | Container Instances, AKS | Enterprise integration |
-| **DigitalOcean** | App Platform, Droplets | Cost-effective option |
+### Tests
 
 ```bash
-# Production build
-docker build -t ml-trading-signals:latest .
+# Install dev dependencies
+pip install -r requirements-dev.txt
 
-# Tag for registry
-docker tag ml-trading-signals:latest registry.example.com/ml-trading-signals:latest
+# Run unit tests
+pytest tests/unit/ -v
 
-# Push to registry
-docker push registry.example.com/ml-trading-signals:latest
+# Run all tests (includes integration with yfinance)
+pytest -v
+
+# With coverage
+pytest --cov=src --cov-report=term-missing
 ```
 
-### 🤝 Contributing
+### Docker
 
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+```bash
+docker build -t ml-trading-signals .
+docker run -p 8000:8000 ml-trading-signals
+```
 
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+### Tech Stack
 
-### 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-### 👤 Author
-
-**Gabriel Demetrios Lafis**
-- GitHub: [@galafis](https://github.com/galafis)
-- LinkedIn: [Gabriel Demetrios Lafis](https://linkedin.com/in/gabriel-demetrios-lafis)
+| Technology | Usage |
+|------------|-------|
+| Python 3.11+ | Primary language |
+| XGBoost / LightGBM | Gradient boosting classifiers |
+| scikit-learn | Random Forest, Logistic Regression, scaling, metrics |
+| ta | Technical indicator computation |
+| yfinance | Market data download |
+| FastAPI | Inference API |
+| pandas / numpy | Data manipulation |
+| joblib | Model serialization |
+| MLflow (optional) | Experiment tracking |
 
 ---
 
-## Português
-
-### 🎯 Visão Geral
-
-**Ml Trading Signals** é uma aplicação Python de nível profissional que demonstra práticas modernas de engenharia de software, incluindo arquitetura limpa, testes abrangentes, implantação containerizada e prontidão para CI/CD.
-
-A base de código compreende **2,204 linhas** de código-fonte organizadas em **22 módulos**, seguindo as melhores práticas do setor para manutenibilidade, escalabilidade e qualidade de código.
-
-### ✨ Funcionalidades Principais
-
-- **📈 Strategy Engine**: Multiple trading strategy implementations with configurable parameters
-- **🔄 Backtesting Framework**: Historical data simulation with realistic market conditions
-- **📊 Performance Analytics**: Sharpe ratio, Sortino ratio, maximum drawdown, and more
-- **⚡ Real-time Processing**: Low-latency data processing optimized for market speed
-- **🤖 ML Pipeline**: End-to-end machine learning workflow from data to deployment
-- **🔬 Feature Engineering**: Automated feature extraction and transformation
-- **📊 Model Evaluation**: Comprehensive metrics and cross-validation
-- **🚀 Model Serving**: Production-ready prediction API
-
-### 🏗️ Arquitetura
-
-```mermaid
-graph TB
-    subgraph Client["🖥️ Client Layer"]
-        A[REST API Client]
-        B[Swagger UI]
-    end
-    
-    subgraph API["⚡ API Layer"]
-        C[Authentication & Rate Limiting]
-        D[Request Validation]
-        E[API Endpoints]
-    end
-    
-    subgraph ML["🤖 ML Engine"]
-        F[Feature Engineering]
-        G[Model Training]
-        H[Prediction Service]
-        I[Model Registry]
-    end
-    
-    subgraph Data["💾 Data Layer"]
-        J[(Database)]
-        K[Cache Layer]
-        L[Data Pipeline]
-    end
-    
-    A --> C
-    B --> C
-    C --> D --> E
-    E --> H
-    E --> J
-    H --> F --> G
-    G --> I
-    I --> H
-    E --> K
-    L --> J
-    
-    style Client fill:#e1f5fe
-    style API fill:#f3e5f5
-    style ML fill:#e8f5e9
-    style Data fill:#fff3e0
-```
-
-### 📡 API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/` | Retrieve resource (list/create) |
-| `GET` | `/health` | Retrieve Health |
-| `POST` | `/predict` | Create Predict |
-| `GET` | `/feature-importance` | Retrieve Feature-Importance |
-| `GET` | `/symbols` | Retrieve Symbols |
-
-### 🚀 Início Rápido
-
-#### Prerequisites
-
-- Python 3.12+
-- pip (Python package manager)
-- Docker and Docker Compose (optional)
-
-#### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/galafis/ml-trading-signals.git
-cd ml-trading-signals
-
-# Create and activate virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-```
-
-#### Running
-
-```bash
-# Run the application
-python src/api/main.py
-```
-
-### 🐳 Docker
-
-```bash
-# Build the Docker image
-docker build -t ml-trading-signals .
-
-# Run the container
-docker run -d -p 8000:8000 --name ml-trading-signals ml-trading-signals
-
-# View logs
-docker logs -f ml-trading-signals
-
-# Stop and remove
-docker stop ml-trading-signals && docker rm ml-trading-signals
-```
-
-### 🧪 Testing
-
-```bash
-# Run all tests
-pytest
-
-# Run with coverage report
-pytest --cov --cov-report=html
-
-# Run specific test module
-pytest tests/test_main.py -v
-
-# Run with detailed output
-pytest -v --tb=short
-```
-
-### 📁 Estrutura do Projeto
-
-```
-ml-trading-signals/
-├── data/
-│   ├── external/
-│   ├── processed/
-│   └── raw/
-├── docs/          # Documentation
-│   └── images/
-├── examples/
-│   └── predict_signals.py
-├── models/        # Data models
-│   └── README.md
-├── notebooks/
-│   ├── 01_quick_start.md
-│   └── README.md
-├── scripts/
-│   └── generate_charts.py
-├── src/          # Source code
-│   ├── api/           # API endpoints
-│   │   ├── __init__.py
-│   │   └── main.py
-│   ├── features/
-│   │   ├── __init__.py
-│   │   ├── data_preparation.py
-│   │   └── technical_indicators.py
-│   ├── inference/
-│   │   └── __init__.py
-│   ├── models/        # Data models
-│   │   ├── __init__.py
-│   │   └── classifier.py
-│   ├── training/
-│   │   ├── __init__.py
-│   │   └── train_pipeline.py
-│   ├── utils/         # Utilities
-│   │   └── __init__.py
-│   └── __init__.py
-├── tests/         # Test suite
-│   ├── integration/
-│   │   ├── __init__.py
-│   │   ├── test_api.py
-│   │   └── test_training.py
-│   ├── unit/
-│   │   ├── __init__.py
-│   │   ├── test_features.py
-│   │   └── test_models.py
-│   └── __init__.py
-├── CONTRIBUTING.md
-├── Dockerfile
-├── LICENSE
-├── README.md
-├── requirements.txt
-└── train.py
-```
-
-### 📊 Performance Metrics
-
-The engine calculates comprehensive performance metrics:
-
-| Metric | Description | Formula |
-|--------|-------------|---------|
-| **Sharpe Ratio** | Risk-adjusted return | (Rp - Rf) / σp |
-| **Sortino Ratio** | Downside risk-adjusted return | (Rp - Rf) / σd |
-| **Max Drawdown** | Maximum peak-to-trough decline | max(1 - Pt/Pmax) |
-| **Win Rate** | Percentage of profitable trades | Wins / Total |
-| **Profit Factor** | Gross profit / Gross loss | ΣProfit / ΣLoss |
-| **Calmar Ratio** | Return / Max Drawdown | CAGR / MDD |
-| **VaR (95%)** | Value at Risk | 5th percentile of returns |
-| **Expected Shortfall** | Conditional VaR | E[R | R < VaR] |
-
-### 🛠️ Stack Tecnológica
-
-| Tecnologia | Descrição | Papel |
-|------------|-----------|-------|
-| **Python** | Core Language | Primary |
-| **Docker** | Containerization platform | Framework |
-| **FastAPI** | High-performance async web framework | Framework |
-| **MLflow** | ML lifecycle management | Framework |
-| **NumPy** | Numerical computing | Framework |
-| **Pandas** | Data manipulation library | Framework |
-| **Plotly** | Interactive visualization | Framework |
-| **scikit-learn** | Machine learning library | Framework |
-| **XGBoost** | Gradient boosting framework | Framework |
-
-### 🚀 Deployment
-
-#### Cloud Deployment Options
-
-The application is containerized and ready for deployment on:
-
-| Platform | Service | Notes |
-|----------|---------|-------|
-| **AWS** | ECS, EKS, EC2 | Full container support |
-| **Google Cloud** | Cloud Run, GKE | Serverless option available |
-| **Azure** | Container Instances, AKS | Enterprise integration |
-| **DigitalOcean** | App Platform, Droplets | Cost-effective option |
-
-```bash
-# Production build
-docker build -t ml-trading-signals:latest .
-
-# Tag for registry
-docker tag ml-trading-signals:latest registry.example.com/ml-trading-signals:latest
-
-# Push to registry
-docker push registry.example.com/ml-trading-signals:latest
-```
-
-### 🤝 Contribuindo
-
-Contribuições são bem-vindas! Sinta-se à vontade para enviar um Pull Request.
-
-### 📄 Licença
-
-Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
-
-### 👤 Autor
+## Autor / Author
 
 **Gabriel Demetrios Lafis**
 - GitHub: [@galafis](https://github.com/galafis)
 - LinkedIn: [Gabriel Demetrios Lafis](https://linkedin.com/in/gabriel-demetrios-lafis)
+
+## Licenca / License
+
+MIT License - veja [LICENSE](LICENSE) para detalhes.

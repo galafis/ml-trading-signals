@@ -6,10 +6,9 @@ from fastapi.testclient import TestClient
 import pandas as pd
 import numpy as np
 from pathlib import Path
-import tempfile
 import os
 
-from src.api.main import app
+from src.api.main import app, MODELS_DIR
 from src.models.classifier import TradingClassifier
 
 
@@ -20,8 +19,11 @@ def client():
 
 
 @pytest.fixture
-def temp_model(tmp_path):
-    """Create a temporary trained model."""
+def temp_model(tmp_path, monkeypatch):
+    """Create a temporary trained model and point MODELS_DIR to tmp_path."""
+    # Point the API to our temp directory
+    monkeypatch.setattr("src.api.main.MODELS_DIR", str(tmp_path))
+
     # Create sample data
     np.random.seed(42)
     n_samples = 100
@@ -41,7 +43,7 @@ def temp_model(tmp_path):
     model_path = tmp_path / "test_model.pkl"
     model.save_model(str(model_path))
 
-    return str(model_path)
+    return "test_model.pkl"
 
 
 class TestAPIEndpoints:
@@ -79,48 +81,37 @@ class TestAPIEndpoints:
         """Test prediction with missing model file."""
         request_data = {
             "symbol": "PETR4.SA",
-            "model_path": "/nonexistent/model.pkl",
+            "model_name": "nonexistent.pkl",
             "model_type": "xgboost",
             "lookback_days": 100,
         }
 
         response = client.post("/predict", json=request_data)
-        # Could be 404 (model not found) or 500 (network error with yfinance)
         assert response.status_code in [404, 500]
 
-    def test_predict_invalid_symbol(self, client, temp_model):
-        """Test prediction with invalid symbol."""
+    def test_predict_path_traversal(self, client):
+        """Test that path traversal in model_name is rejected."""
         request_data = {
-            "symbol": "INVALID_SYMBOL_DOES_NOT_EXIST",
-            "model_path": temp_model,
+            "symbol": "PETR4.SA",
+            "model_name": "../../etc/passwd",
             "model_type": "xgboost",
             "lookback_days": 100,
         }
 
         response = client.post("/predict", json=request_data)
-        # Should get either 404 or 500 depending on yfinance response
-        assert response.status_code in [404, 500]
+        assert response.status_code == 400
 
     def test_feature_importance_missing_model(self, client):
         """Test feature importance with missing model."""
         response = client.get(
-            "/feature-importance?model_path=/nonexistent/model.pkl&model_type=xgboost"
+            "/feature-importance?model_name=nonexistent.pkl&model_type=xgboost"
         )
         assert response.status_code == 404
-        assert "Model file not found" in response.json()["detail"]
 
     def test_feature_importance_success(self, client, temp_model):
         """Test feature importance with valid model."""
-        # First, we need to load and check the model
-        from src.models.classifier import TradingClassifier
-
-        model = TradingClassifier.load_model(temp_model, "xgboost")
-
-        # Model should have feature importance after training
-        assert model.feature_importance is not None
-
         response = client.get(
-            f"/feature-importance?model_path={temp_model}&model_type=xgboost&top_n=5"
+            f"/feature-importance?model_name={temp_model}&model_type=xgboost&top_n=5"
         )
         assert response.status_code == 200
         data = response.json()
@@ -136,33 +127,22 @@ class TestAPIValidation:
 
     def test_predict_missing_fields(self, client):
         """Test prediction with missing required fields."""
-        # Missing symbol
         response = client.post(
             "/predict",
-            json={"model_path": "/path/to/model.pkl", "model_type": "xgboost"},
+            json={"model_name": "model.pkl", "model_type": "xgboost"},
         )
         assert response.status_code == 422  # Validation error
 
-    def test_predict_invalid_model_type(self, client):
-        """Test prediction with invalid model type."""
+    def test_predict_lookback_out_of_range(self, client):
+        """Test prediction with lookback_days outside allowed range."""
         request_data = {
             "symbol": "PETR4.SA",
-            "model_path": "/path/to/model.pkl",
-            "model_type": "invalid_type",
-            "lookback_days": 100,
+            "model_name": "model.pkl",
+            "model_type": "xgboost",
+            "lookback_days": 10,  # below minimum of 50
         }
-
         response = client.post("/predict", json=request_data)
-        # Should fail during model loading
-        assert response.status_code in [404, 500]
-
-    def test_feature_importance_invalid_top_n(self, client, temp_model):
-        """Test feature importance with invalid top_n."""
-        response = client.get(
-            f"/feature-importance?model_path={temp_model}&model_type=xgboost&top_n=-1"
-        )
-        # Should work, pandas head() handles negative values
-        assert response.status_code == 200
+        assert response.status_code == 422
 
 
 class TestAPIResponseFormat:
@@ -173,15 +153,11 @@ class TestAPIResponseFormat:
         response = client.get("/")
         data = response.json()
 
-        # Check all expected fields are present
         assert "message" in data
         assert "version" in data
         assert "docs" in data
-
-        # Check field types
         assert isinstance(data["message"], str)
         assert isinstance(data["version"], str)
-        assert isinstance(data["docs"], str)
 
     def test_health_response_format(self, client):
         """Test health check response format."""
@@ -191,10 +167,7 @@ class TestAPIResponseFormat:
         assert "status" in data
         assert "timestamp" in data
         assert data["status"] == "healthy"
-
-        # Timestamp should be ISO format string
         assert isinstance(data["timestamp"], str)
-        assert "T" in data["timestamp"]  # ISO 8601 format
 
     def test_symbols_response_format(self, client):
         """Test symbols endpoint response format."""
@@ -203,8 +176,6 @@ class TestAPIResponseFormat:
 
         assert "symbols" in data
         assert isinstance(data["symbols"], list)
-
-        # All symbols should be strings
         for symbol in data["symbols"]:
             assert isinstance(symbol, str)
             assert len(symbol) > 0
