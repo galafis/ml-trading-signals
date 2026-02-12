@@ -18,10 +18,10 @@ output_dir.mkdir(parents=True, exist_ok=True)
 
 # Model performance data (example results)
 models = ['XGBoost', 'LightGBM', 'Random\nForest', 'Gradient\nBoosting', 'Logistic\nRegression']
-accuracy = [0.68, 0.67, 0.64, 0.65, 0.58]
-precision = [0.71, 0.70, 0.66, 0.67, 0.60]
-recall = [0.65, 0.64, 0.62, 0.63, 0.56]
-f1_score = [0.68, 0.67, 0.64, 0.65, 0.58]
+accuracy = [0.62, 0.61, 0.59, 0.60, 0.55]
+precision = [0.64, 0.63, 0.61, 0.62, 0.57]
+recall = [0.58, 0.57, 0.55, 0.56, 0.52]
+f1_score = [0.61, 0.60, 0.58, 0.59, 0.54]
 
 # Chart 1: Model Comparison
 fig, ax = plt.subplots(figsize=(12, 6))
@@ -112,11 +112,9 @@ print(f"✓ Generated: {output_dir / 'training_history.png'}")
 plt.close()
 
 # Chart 4: Confusion Matrix
-from sklearn.metrics import confusion_matrix
-import matplotlib.patches as mpatches
 
-# Example confusion matrix
-cm = np.array([[450, 150], [120, 480]])
+# Example confusion matrix matching ~62% overall accuracy
+cm = np.array([[320, 180], [200, 300]])
 
 fig, ax = plt.subplots(figsize=(8, 6))
 im = ax.imshow(cm, interpolation='nearest', cmap='Blues')

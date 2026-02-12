@@ -148,7 +148,7 @@ def add_custom_indicator(df: pd.DataFrame) -> pd.DataFrame:
 
 ## 🔍 Code Review Process
 
-1. **Automated Checks**: CI/CD runs tests and linting
+1. **Tests**: Ensure all tests pass locally (`pytest`)
 2. **Code Review**: Review for quality and ML best practices
 3. **Feedback**: Address requested changes
 4. **Approval**: Merge after approval

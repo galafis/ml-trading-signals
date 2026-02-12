@@ -14,7 +14,6 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.features.technical_indicators import TechnicalIndicators
-from src.models.classifier import TradingClassifier
 
 
 def main():
@@ -64,12 +63,6 @@ def main():
     # Remove NaN values
     data_clean = data.dropna()
     print(f"🎯 Prepared {len(data_clean)} samples for analysis")
-    print()
-    
-    # Create model (in production, load pre-trained model)
-    print("🤖 Initializing ML model...")
-    model = TradingClassifier(model_type='xgboost')
-    print("✅ Model initialized (XGBoost)")
     print()
     
     # Generate signals for last 5 days

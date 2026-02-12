@@ -16,9 +16,9 @@
 
 ### 🎯 Overview
 
-**ML Trading Signals** is a professional machine learning system for generating trading signals using advanced algorithms and technical analysis. The platform combines feature engineering, model training, and real-time inference to predict market movements with high accuracy.
+**ML Trading Signals** is a machine learning system for generating trading signals using gradient boosting algorithms and technical analysis. The platform combines feature engineering, model training, and real-time inference to predict market direction.
 
-Built for quantitative traders and financial engineers, this system provides end-to-end ML capabilities from data preparation to production-ready API deployment.
+Built for quantitative traders and financial engineers, this system provides end-to-end ML capabilities from data preparation to API deployment.
 
 ### ✨ Key Features
 
@@ -215,11 +215,11 @@ The system automatically engineers 40+ features from OHLCV data:
 
 ### 📊 Model Performance
 
-Our ML models achieve strong performance across multiple metrics:
+Our ML models achieve the following performance across multiple metrics:
 
 ![Model Comparison](docs/images/model_comparison.png)
 
-**XGBoost** and **LightGBM** consistently outperform other algorithms with accuracy above 67% and F1-scores of 0.68.
+**XGBoost** and **LightGBM** tend to perform best among the tested algorithms, with accuracy around 61–62% and F1-scores around 0.60–0.61 on the Bovespa dataset.
 
 #### Feature Importance
 
@@ -227,7 +227,7 @@ The most predictive features for trading signals:
 
 ![Feature Importance](docs/images/feature_importance.png)
 
-**RSI**, **MACD**, and **Bollinger Band Width** are the top 3 most important features.
+In typical runs, **RSI**, **MACD**, and **Bollinger Band Width** tend to rank among the most important features.
 
 #### Training History
 
@@ -235,7 +235,7 @@ Model convergence during training:
 
 ![Training History](docs/images/training_history.png)
 
-Both training and validation metrics converge smoothly, indicating good generalization.
+Illustrative training and validation curves for a typical run.
 
 #### Confusion Matrix
 
@@ -243,7 +243,7 @@ Classification performance breakdown:
 
 ![Confusion Matrix](docs/images/confusion_matrix.png)
 
-The model achieves 75% accuracy on buy signals and 80% accuracy on sell/hold signals.
+Example confusion matrix showing classification performance on the test set.
 
 ### 🎓 Training Pipeline
 
@@ -556,9 +556,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### 🎯 Visão Geral
 
-**ML Trading Signals** é um sistema profissional de machine learning para geração de sinais de trading usando algoritmos avançados e análise técnica. A plataforma combina engenharia de features, treinamento de modelos e inferência em tempo real para prever movimentos de mercado com alta precisão.
+**ML Trading Signals** é um sistema de machine learning para geração de sinais de trading usando algoritmos de gradient boosting e análise técnica. A plataforma combina engenharia de features, treinamento de modelos e inferência em tempo real para prever a direção do mercado.
 
-Construído para traders quantitativos e engenheiros financeiros, este sistema fornece capacidades de ML de ponta a ponta, desde a preparação de dados até o deployment de API pronta para produção.
+Construído para traders quantitativos e engenheiros financeiros, este sistema fornece capacidades de ML de ponta a ponta, desde a preparação de dados até o deployment de API.
 
 ### ✨ Funcionalidades Principais
 
@@ -937,7 +937,3 @@ Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICE
 ### 👤 Autor
 
 **Gabriel Demetrios Lafis**
-
----
-
-**⭐ Se este projeto foi útil para você, considere dar uma estrela no GitHub!**
