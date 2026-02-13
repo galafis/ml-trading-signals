@@ -73,6 +73,20 @@ curl http://localhost:8000/symbols
 
 ### Estrutura do Projeto
 
+```mermaid
+graph TD
+    CLI["train.py<br/>CLI Entry Point"] --> PIPE["train_pipeline.py<br/>Training Pipeline"]
+    PIPE --> YFINANCE["Yahoo Finance<br/>OHLCV Data"]
+    PIPE --> TI["technical_indicators.py<br/>~35 Technical Indicators"]
+    PIPE --> DP["data_preparation.py<br/>Target / Scaling / Split"]
+    PIPE --> CLF["classifier.py<br/>XGBoost / LightGBM / RF / GB / LR"]
+    CLF --> SAVED["Saved Model .pkl"]
+    SAVED --> API["main.py<br/>FastAPI Inference API"]
+    API --> TI
+    API -->|"/predict"| SIGNAL["Trading Signal"]
+    API -->|"/feature-importance"| FI["Feature Importance"]
+```
+
 ```
 ml-trading-signals/
 ├── src/
@@ -234,6 +248,20 @@ curl http://localhost:8000/symbols
 | `GET` | `/symbols` | List suggested Brazilian stock symbols |
 
 ### Project Structure
+
+```mermaid
+graph TD
+    CLI["train.py<br/>CLI Entry Point"] --> PIPE["train_pipeline.py<br/>Training Pipeline"]
+    PIPE --> YFINANCE["Yahoo Finance<br/>OHLCV Data"]
+    PIPE --> TI["technical_indicators.py<br/>~35 Technical Indicators"]
+    PIPE --> DP["data_preparation.py<br/>Target / Scaling / Split"]
+    PIPE --> CLF["classifier.py<br/>XGBoost / LightGBM / RF / GB / LR"]
+    CLF --> SAVED["Saved Model .pkl"]
+    SAVED --> API["main.py<br/>FastAPI Inference API"]
+    API --> TI
+    API -->|"/predict"| SIGNAL["Trading Signal"]
+    API -->|"/feature-importance"| FI["Feature Importance"]
+```
 
 ```
 ml-trading-signals/
