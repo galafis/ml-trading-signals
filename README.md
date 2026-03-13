@@ -7,6 +7,7 @@ Sistema de machine learning para gerar sinais de trading (compra/venda) a partir
 [![LightGBM](https://img.shields.io/badge/LightGBM-4.1-9ACD32.svg)](https://lightgbm.readthedocs.io)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104-009688.svg)](https://fastapi.tiangolo.com)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker)](Dockerfile)
 
 [Portugues](#portugues) | [English](#english)
 
